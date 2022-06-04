@@ -1,0 +1,26 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table Profile {
+  id Int [pk, increment]
+  bio String
+  user User [not null]
+  userId Int [unique, not null]
+}
+
+Table User {
+  id Int [pk, increment]
+  email String [unique, not null]
+  firstname String
+  lastname String
+  profile Profile
+  role Role [not null, default: 'USER']
+}
+
+Enum Role {
+  ADMIN
+  USER
+}
+
+Ref: Profile.userId - User.id
