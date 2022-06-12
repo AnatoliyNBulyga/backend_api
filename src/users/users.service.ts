@@ -27,12 +27,14 @@ export class UsersService {
       if (candidate) {
         throw new HttpException('User with this email is already exist', 500);
       }
+      const hashedPassword = await bcrypt.hash(user.password, 8);
       const created = await this.prisma.user.create({
         data: {
           email: user.email,
           firstname: user.firstname,
           lastname: user.lastname,
           role: user.role ?? 'USER',
+          hashedPassword,
         },
       });
       return created;
@@ -45,6 +47,7 @@ export class UsersService {
   async updateUser(user) {
     console.log('user passed in service ', user);
     try {
+      const hashedPassword = await bcrypt.hash(user.password, 8);
       const updated = await this.prisma.user.update({
         where: {
           email: user.email,
@@ -54,6 +57,7 @@ export class UsersService {
           firstname: user.firstname,
           lastname: user.lastname,
           role: user.role ?? 'USER',
+          hashedPassword,
         },
       });
       return updated;
@@ -66,6 +70,14 @@ export class UsersService {
   async deleteUser(email) {
     console.log('user passed in service ', email);
     try {
+      const candidateDelete = await this.prisma.user.findFirst({
+        where: {
+          email,
+        },
+      });
+      if (!candidateDelete) {
+        throw new HttpException('User with this email is not exist', 500);
+      }
       const deleted = await this.prisma.user.delete({
         where: {
           email,
@@ -86,9 +98,10 @@ export class UsersService {
           email,
         },
         data: {
-          HashedRefreshToken: currentHashedRefreshToken,
+          hashedRefreshToken: currentHashedRefreshToken,
         },
       });
+      return true;
     } catch (e) {
       console.log(e);
       return new HttpException('Set Refresh Token ERROR', 500);
@@ -115,7 +128,7 @@ export class UsersService {
       const user = await this.getUserByEmail(email);
       const isRefreshTokenMatching = await bcrypt.compare(
         refreshToken,
-        user.HashedRefreshToken,
+        user.hashedRefreshToken,
       );
       if (!isRefreshTokenMatching) {
         throw new HttpException('Invalid refresh token', HttpStatus.NOT_FOUND);
@@ -125,5 +138,17 @@ export class UsersService {
       console.log(e);
       return new HttpException('An unknown error occured', 500);
     }
+  }
+
+  async removeRefreshToken(email: string) {
+    const remove = await this.prisma.user.update({
+      where: {
+        email,
+      },
+      data: {
+        hashedRefreshToken: null,
+      },
+    });
+    return remove;
   }
 }

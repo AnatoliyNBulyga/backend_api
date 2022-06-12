@@ -29,7 +29,8 @@ model User {
   lastname              String?
   profile               Profile?
   role                  Role     @default(USER)
-  HashedRefreshToken    String?
+  hashedRefreshToken    String?
+  hashedPassword        String?
 }
 
 enum Role {

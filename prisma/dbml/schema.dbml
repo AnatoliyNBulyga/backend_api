@@ -16,7 +16,8 @@ Table User {
   lastname String
   profile Profile
   role Role [not null, default: 'USER']
-  HashedRefreshToken String
+  hashedRefreshToken String
+  hashedPassword String
 }
 
 Enum Role {
