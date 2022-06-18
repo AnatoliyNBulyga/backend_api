@@ -6,13 +6,14 @@ import {
   HttpException,
   Param,
   Post,
-  Put, UseGuards,
+  Put,
+  UseGuards,
   UsePipes,
-  ValidationPipe
-} from "@nestjs/common";
+  ValidationPipe,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UserDto } from './dto/user.dto';
-import JwtAccessTokenGuard from "../auth/guards/jwt-access-token.guard";
+import JwtAccessTokenGuard from '../auth/guards/jwt-access-token.guard';
 
 @Controller('users')
 export class UsersController {

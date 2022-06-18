@@ -12,7 +12,10 @@ export class UsersService {
       return users;
     } catch (e) {
       console.log(e);
-      return new HttpException('Get user ERROR', 500);
+      return new HttpException(
+        'Get user ERROR',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
@@ -25,7 +28,10 @@ export class UsersService {
         },
       });
       if (candidate) {
-        throw new HttpException('User with this email is already exist', 500);
+        throw new HttpException(
+          'User with this email is already exist',
+          HttpStatus.BAD_REQUEST,
+        );
       }
       const hashedPassword = await bcrypt.hash(user.password, 8);
       const created = await this.prisma.user.create({
@@ -40,7 +46,10 @@ export class UsersService {
       return created;
     } catch (e) {
       console.log(e);
-      return new HttpException('Create user ERROR', 500);
+      return new HttpException(
+        'Create user ERROR',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
@@ -63,7 +72,10 @@ export class UsersService {
       return updated;
     } catch (e) {
       console.log(e);
-      return new HttpException('Update user ERROR', 500);
+      return new HttpException(
+        'Update user ERROR',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
@@ -76,7 +88,10 @@ export class UsersService {
         },
       });
       if (!candidateDelete) {
-        throw new HttpException('User with this email is not exist', 500);
+        throw new HttpException(
+          'User with this email is not exist',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
       }
       const deleted = await this.prisma.user.delete({
         where: {
@@ -86,7 +101,10 @@ export class UsersService {
       return deleted;
     } catch (e) {
       console.log(e);
-      return new HttpException('Delete user ERROR', 500);
+      return new HttpException(
+        'Delete user ERROR',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
@@ -104,7 +122,10 @@ export class UsersService {
       return true;
     } catch (e) {
       console.log(e);
-      return new HttpException('Set Refresh Token ERROR', 500);
+      return new HttpException(
+        'Set Refresh Token ERROR',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
@@ -136,19 +157,30 @@ export class UsersService {
       return user;
     } catch (e) {
       console.log(e);
-      return new HttpException('An unknown error occured', 500);
+      return new HttpException(
+        'An unknown error occured',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
   async removeRefreshToken(email: string) {
-    const remove = await this.prisma.user.update({
-      where: {
-        email,
-      },
-      data: {
-        hashedRefreshToken: null,
-      },
-    });
-    return remove;
+    try {
+      const remove = await this.prisma.user.update({
+        where: {
+          email,
+        },
+        data: {
+          hashedRefreshToken: null,
+        },
+      });
+      return remove;
+    } catch (e) {
+      console.log(e);
+      return new HttpException(
+        'An unknown error occured',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 }

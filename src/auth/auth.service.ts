@@ -15,7 +15,11 @@ export class AuthService {
     try {
       const user = await this.usersService.getUserByEmail(email);
       await this.verifyPassword(password, user.hashedPassword);
-      const secureUser = { ...user, password: 'secure' };
+      const secureUser = {
+        ...user,
+        hashedPassword: 'secure',
+        hashedRefreshToken: 'secure',
+      };
       return secureUser;
     } catch (e) {
       console.log(e, 'e');
@@ -37,19 +41,18 @@ export class AuthService {
     return true;
   }
 
-  public getCookieWithJwtAccessToken(email: string) {
-    const payload: TokenPayload = { email };
-    const token = this.jwtService.sign(payload, {
+  public getCookieWithJwtAccessToken(payload: TokenPayload) {
+    const accessToken = this.jwtService.sign(payload, {
       secret: process.env.JWT_ACCESS_TOKEN_SECRET,
-      expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME,
+      expiresIn: Number(process.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME),
     });
-    return `Authentication=${token}; HttpOnly; Path=/; Max-Age=${process.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME}`;
+    const accessTokenCookie = `Authentication=${accessToken}; HttpOnly; Path=/; Max-Age=${process.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME}`;
+    return { accessToken, accessTokenCookie };
   }
-  public getCookieWithJwtRefreshToken(email: string) {
-    const payload = { email };
+  public getCookieWithJwtRefreshToken(payload: TokenPayload) {
     const refreshToken = this.jwtService.sign(payload, {
       secret: process.env.JWT_REFRESH_TOKEN_SECRET,
-      expiresIn: process.env.JWT_REFRESH_TOKEN_EXPIRATION_TIME,
+      expiresIn: Number(process.env.JWT_REFRESH_TOKEN_EXPIRATION_TIME),
     });
     const refreshTokenCookie = `Refresh=${refreshToken}; HttpOnly; Path=/; Max-Age=${process.env.JWT_REFRESH_TOKEN_EXPIRATION_TIME}`;
     return {

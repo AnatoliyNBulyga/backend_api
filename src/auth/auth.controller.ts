@@ -4,14 +4,19 @@ import {
   Get,
   HttpCode,
   Post,
-  Req, Res,
-  UseGuards
-} from "@nestjs/common";
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import JwtRefreshGuard from './guards/jwt-refresh-token.guard';
-import LocalAuthGuard from "./guards/local-auth.guard";
-import JwtAccessTokenGuard from "./guards/jwt-access-token.guard";
+import LocalAuthGuard from './guards/local-auth.guard';
+import JwtAccessTokenGuard from './guards/jwt-access-token.guard';
+import { TokenPayload } from '../interfaces/token-payload.interface';
+import { GetUser } from './decorators/get-user.decorator';
+import { IUser } from '../interfaces/user.interface';
+import { IRequestWithUser } from '../interfaces/request-with-user.interface';
 
 @Controller('auth')
 export class AuthController {
@@ -23,34 +28,38 @@ export class AuthController {
   @HttpCode(200)
   @UseGuards(LocalAuthGuard)
   @Post('login')
-  async logIn(@Req() request) {
-    const { user } = request;
-    const accessTokenCookie = this.authService.getCookieWithJwtAccessToken(
-      user.email,
-    );
+  async logIn(@Req() request: IRequestWithUser, @GetUser() user: IUser) {
+    const payload: TokenPayload = {
+      email: user.email,
+      firstname: user.firstname,
+      lastname: user.lastname,
+      role: user.role,
+    };
+    const { accessToken, accessTokenCookie } =
+      this.authService.getCookieWithJwtAccessToken(payload);
     const { refreshTokenCookie, refreshToken } =
-      this.authService.getCookieWithJwtRefreshToken(user.email);
+      this.authService.getCookieWithJwtRefreshToken(payload);
     await this.usersService.setCurrentRefreshToken(refreshToken, user.email);
     request.res.setHeader('Set-Cookie', [
       accessTokenCookie,
       refreshTokenCookie,
     ]);
+    return { accessToken, user };
   }
 
   @UseGuards(JwtRefreshGuard)
   @Get('refresh')
-  refresh(@Req() request) {
-    const accessTokenCookie = this.authService.getCookieWithJwtAccessToken(
-      request.email,
-    );
-    const { refreshTokenCookie } =
-      this.authService.getCookieWithJwtRefreshToken(request.email);
-
-    request.res.setHeader('Set-Cookie', [
-      accessTokenCookie,
-      refreshTokenCookie,
-    ]);
-    return request.user;
+  refresh(@Req() request: IRequestWithUser, @GetUser() user: IUser) {
+    const payload: TokenPayload = {
+      email: user.email,
+      firstname: user.firstname,
+      lastname: user.lastname,
+      role: user.role,
+    };
+    const { accessTokenCookie } =
+      this.authService.getCookieWithJwtAccessToken(payload);
+    request.res.setHeader('Set-Cookie', accessTokenCookie);
+    return user;
   }
 
   @UseGuards(JwtAccessTokenGuard)
@@ -64,6 +73,6 @@ export class AuthController {
 
   @Post('registration')
   async registration(@Body() user) {
-    return this.authService.registration(user)
+    return this.authService.registration(user);
   }
 }
