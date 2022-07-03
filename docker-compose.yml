@@ -1,0 +1,67 @@
+version: '3.8'
+services:
+  main:
+    container_name: main
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - prod.env
+    ports:
+      - 5000:5000
+      - 9229:9229
+    restart: always
+    depends_on:
+      - postgres
+      - nest-redis
+
+  prisma-migrate:
+    container_name: prisma-migrate
+    build:
+      context: prisma
+      dockerfile: Dockerfile
+    depends_on:
+      - postgres
+    env_file:
+      - prod.env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+
+  postgres:
+    container_name: postgres
+    image: postgres:latest
+    restart: always
+    env_file:
+      - prod.env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready -U postgres
+
+  nest-redis:
+    container_name: nest-redis
+    image: redis:latest
+    restart: always
+    ports:
+      - 6379:6379
+    env_file:
+      - prod.env
+    volumes:
+      - nest-redis:/var/lib/redis/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 1s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  postgres:
+    name: nest-postgres-db
+  nest-redis:
+    name: nest-redis-db

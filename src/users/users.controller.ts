@@ -22,45 +22,25 @@ export class UsersController {
   @UseGuards(JwtAccessTokenGuard)
   @Get()
   async getUsers() {
-    try {
-      return await this.userService.getUsers();
-    } catch (e) {
-      console.log(e);
-      return new HttpException('Internal server error', 500);
-    }
+    return await this.userService.getUsers();
   }
 
   @UseGuards(JwtAccessTokenGuard)
   @UsePipes(new ValidationPipe({ transform: true }))
   @Post()
   async createUser(@Body() user: UserDto) {
-    try {
-      return await this.userService.createUser(user);
-    } catch (e) {
-      console.log(e);
-      return new HttpException('Internal server error', 500);
-    }
+    return await this.userService.createUser(user);
   }
 
   @UseGuards(JwtAccessTokenGuard)
   @Put()
   async updateUser(@Body() user: UserDto) {
-    try {
-      return await this.userService.updateUser(user);
-    } catch (e) {
-      console.log(e);
-      return new HttpException('Internal server error', 500);
-    }
+    return await this.userService.updateUser(user);
   }
 
   @UseGuards(JwtAccessTokenGuard)
   @Delete()
   async deleteUser(@Param() email: string) {
-    try {
-      return await this.userService.deleteUser(email);
-    } catch (e) {
-      console.log(e);
-      return new HttpException('Internal server error', 500);
-    }
+    return await this.userService.deleteUser(email);
   }
 }

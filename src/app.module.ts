@@ -4,6 +4,13 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 
 @Module({
-  imports: [UsersModule, ConfigModule.forRoot({ isGlobal: true }), AuthModule],
+  imports: [
+    UsersModule,
+    ConfigModule.forRoot({
+      envFilePath: `${process.env.NODE_ENV}.env`,
+      isGlobal: true,
+    }),
+    AuthModule,
+  ],
 })
 export class AppModule {}

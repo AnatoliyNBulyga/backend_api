@@ -9,7 +9,11 @@ export class UsersService {
   async getUsers() {
     try {
       const users = await this.prisma.user.findMany();
-      return users;
+      return users.map((user) => ({
+        ...user,
+        hashedRefreshToken: 'secure',
+        hashedPassword: 'secure',
+      }));
     } catch (e) {
       console.log(e);
       return new HttpException(
@@ -43,7 +47,7 @@ export class UsersService {
           hashedPassword,
         },
       });
-      return created;
+      return { ...created, hashedPassword: 'secure' };
     } catch (e) {
       console.log(e);
       return new HttpException(
@@ -69,7 +73,7 @@ export class UsersService {
           hashedPassword,
         },
       });
-      return updated;
+      return { ...updated, hashedPassword: 'secure' };
     } catch (e) {
       console.log(e);
       return new HttpException(
