@@ -2,11 +2,27 @@
 //// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 //// ------------------------------------------------------
 
-Table Profile {
+Table Address {
   id Int [pk, increment]
-  bio String
-  user User [not null]
-  userId Int [unique, not null]
+  street String [not null]
+  city String [not null]
+  country String [not null]
+  user User
+}
+
+Table Post {
+  id Int [pk, increment]
+  title String [not null]
+  content String [not null]
+  author User [not null]
+  authorId Int [not null]
+  categories Category [not null]
+}
+
+Table Category {
+  id Int [pk, increment]
+  name String [not null]
+  posts Post [not null]
 }
 
 Table User {
@@ -14,10 +30,18 @@ Table User {
   email String [unique, not null]
   firstname String
   lastname String
-  profile Profile
   role Role [not null, default: 'USER']
   hashedRefreshToken String
   hashedPassword String
+  createdAt DateTime [default: `now()`, not null]
+  address Address
+  addressId Int [unique]
+  posts Post [not null]
+}
+
+Table CategoryToPost {
+  categoriesId Int [ref: > Category.id]
+  postsId Int [ref: > Post.id]
 }
 
 Enum Role {
@@ -25,4 +49,6 @@ Enum Role {
   USER
 }
 
-Ref: Profile.userId - User.id
+Ref: Post.authorId > User.id
+
+Ref: User.addressId - Address.id

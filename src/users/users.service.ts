@@ -1,14 +1,17 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { PrismaService } from 'nestjs-prisma';
+import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
+import { PrismaError } from '../utils/prisma-error';
+import { UserNotFoundException } from './excaptions/user-not-found.excaption';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prismaService: PrismaService) {}
 
   async getUsers() {
     try {
-      const users = await this.prisma.user.findMany();
+      const users = await this.prismaService.user.findMany();
       return users.map((user) => ({
         ...user,
         hashedRefreshToken: 'secure',
@@ -26,34 +29,30 @@ export class UsersService {
   async createUser(user) {
     console.log('user passed in service ', user);
     try {
-      const candidate = await this.prisma.user.findFirst({
-        where: {
-          email: user.email,
-        },
-      });
-      if (candidate) {
-        throw new HttpException(
-          'User with this email is already exist',
-          HttpStatus.BAD_REQUEST,
-        );
-      }
       const hashedPassword = await bcrypt.hash(user.password, 8);
-      const created = await this.prisma.user.create({
+      const created = await this.prismaService.user.create({
         data: {
-          email: user.email,
-          firstname: user.firstname,
-          lastname: user.lastname,
+          ...user,
           role: user.role ?? 'USER',
           hashedPassword,
+          address: {
+            create: user.address,
+          },
+          include: {
+            address: true,
+          },
         },
       });
       return { ...created, hashedPassword: 'secure' };
-    } catch (e) {
-      console.log(e);
-      return new HttpException(
-        'Create user ERROR',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+    } catch (err) {
+      console.log(err, 'err in create user');
+      if (
+        err instanceof PrismaClientKnownRequestError &&
+        err.code === PrismaError.RecordDoesNotExist
+      ) {
+        throw new UserNotFoundException(user.email);
+      }
+      throw err;
     }
   }
 
@@ -61,61 +60,54 @@ export class UsersService {
     console.log('user passed in service ', user);
     try {
       const hashedPassword = await bcrypt.hash(user.password, 8);
-      const updated = await this.prisma.user.update({
+      const updated = await this.prismaService.user.update({
         where: {
           email: user.email,
         },
         data: {
-          email: user.email,
-          firstname: user.firstname,
-          lastname: user.lastname,
+          ...user,
           role: user.role ?? 'USER',
           hashedPassword,
         },
       });
       return { ...updated, hashedPassword: 'secure' };
-    } catch (e) {
-      console.log(e);
-      return new HttpException(
-        'Update user ERROR',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+    } catch (err) {
+      console.log(err, 'err in update user');
+      if (
+        err instanceof PrismaClientKnownRequestError &&
+        err.code === PrismaError.RecordDoesNotExist
+      ) {
+        throw new UserNotFoundException(user.email);
+      }
+      throw err;
     }
   }
 
   async deleteUser(email) {
     console.log('user passed in service ', email);
     try {
-      const candidateDelete = await this.prisma.user.findFirst({
-        where: {
-          email,
-        },
-      });
-      if (!candidateDelete) {
-        throw new HttpException(
-          'User with this email is not exist',
-          HttpStatus.INTERNAL_SERVER_ERROR,
-        );
-      }
-      const deleted = await this.prisma.user.delete({
+      const deleted = await this.prismaService.user.delete({
         where: {
           email,
         },
       });
       return deleted;
-    } catch (e) {
-      console.log(e);
-      return new HttpException(
-        'Delete user ERROR',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+    } catch (err) {
+      console.log(err, 'err in delete user');
+      if (
+        err instanceof PrismaClientKnownRequestError &&
+        err.code === PrismaError.RecordDoesNotExist
+      ) {
+        throw new UserNotFoundException(email);
+      }
+      throw err;
     }
   }
 
   async setCurrentRefreshToken(refreshToken: string, email: string) {
     try {
       const currentHashedRefreshToken = await bcrypt.hash(refreshToken, 8);
-      await this.prisma.user.update({
+      await this.prismaService.user.update({
         where: {
           email,
         },
@@ -134,16 +126,13 @@ export class UsersService {
   }
 
   async getUserByEmail(email: string) {
-    const user = await this.prisma.user.findFirst({
+    const user = await this.prismaService.user.findFirst({
       where: {
         email,
       },
     });
     if (!user) {
-      throw new HttpException(
-        'User with this email does not exist',
-        HttpStatus.NOT_FOUND,
-      );
+      throw new UserNotFoundException(email);
     }
     return user;
   }
@@ -170,7 +159,7 @@ export class UsersService {
 
   async removeRefreshToken(email: string) {
     try {
-      const remove = await this.prisma.user.update({
+      const remove = await this.prismaService.user.update({
         where: {
           email,
         },
