@@ -1,6 +1,7 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 // to migrate "prisma migrate dev --name [name]"
+// to reset db "npx prisma migrate reset"
 
 generator client {
   provider = "prisma-client-js"
