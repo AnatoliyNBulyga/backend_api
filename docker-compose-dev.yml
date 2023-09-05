@@ -1,49 +1,11 @@
 version: '3.8'
 services:
-  main:
-    container_name: main
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: development
-    env_file:
-      - .env
-    volumes:
-      - .:/app
-      - /app/node_modules
-      - /app/prisma
-    ports:
-      - 5000:5000
-      - 9229:9229
-    command: npm run start:dev
-    restart: always
-    depends_on:
-      - postgres
-      - nest-redis
-
-  prisma-migrate:
-    container_name: prisma-migrate
-    build:
-      context: prisma
-      dockerfile: Dockerfile
-    depends_on:
-      - postgres
-    env_file:
-      - .env
-#    environment:
-#      DATABASE_URL: ${DATABASE_URL}
-
   postgres:
     container_name: postgres
     image: postgres:latest
     restart: always
     env_file:
       - .env
-    environment:
-      PG_DATA: /var/lib/postgresql/data
-#      POSTGRES_USER: ${POSTGRES_USER}
-#      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-#      PGPASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - 5432:5432
     volumes:

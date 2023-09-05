@@ -30,10 +30,10 @@ Backend application based on [Nest](https://github.com/nestjs/nest) framework.
 
 ```bash
 # development
-# 1. Build container from docker image
-$ npm run docker:dev:build
-# 2. Run the app in docker container
-$ npm run docker:dev 
+# 1. Run the app in docker container
+$ npm run docker:dev
+# 2. Run Prisma
+$ npm run prisma
 ```
 
 ## Support
